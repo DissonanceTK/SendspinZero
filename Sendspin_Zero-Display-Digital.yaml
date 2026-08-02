@@ -14,7 +14,7 @@ substitutions:
   # your home assistant weather entity, in most cases the same.
   ha_weather_entity: weather.forecast_home
 
-  media_sample_rate: 44000
+  media_sample_rate: 44100
 
   # Rotating the display, uncomment the block you need (default 0 degree)
 
