@@ -58,7 +58,6 @@ captive_portal:
 psram:
   mode: quad
   speed: 80MHz
-  ignore_not_found: false
 
 deep_sleep:
   id: deep_sleep_control
