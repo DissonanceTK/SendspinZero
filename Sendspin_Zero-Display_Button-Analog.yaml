@@ -43,17 +43,17 @@ packages:
     ref: main
     refresh: 0s
     files:
-      - devices/Under_Development/Modular/HW/sendspin-external_components.yaml
+      - devices/Under_Development/Modular/HW/sendspin-external_components_2026.7.3.yaml
 
 
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2026.7.0
+  min_version: 2026.7.3
   name_add_mac_suffix: true
   project:
     name: realdeco.sendspin_zero
-    version: "2026.7.0"
+    version: "2026.7.3"
   on_boot:
     priority: -100
     then:
@@ -124,28 +124,34 @@ globals:
 
 image:
   - platform: file
-    file: https://raw.githubusercontent.com/RealDeco/xiaozhi-esphome/main/images/${imagemodel}/360x360/playing.png
+    file: https://raw.githubusercontent.com/RealDeco/xiaozhi-esphome/main/images/${imagemodel}/240x240/playing.png
     id: fallback_playing_image
     resize: 170x170
     type: RGB565
     dither: NONE
 
-generic_image:
   - platform: sendspin
-    id: sendspin_album_art
-    format: jpeg
+    id: album_slot
+    format: JPEG
     type: RGB565
     resize: 170x170
-    source: ALBUM
+    display_offset: 1s
+    current_image:
+      id: album_art
     on_image_display:
+      - logger.log:
+          format: "Album art displayed (late by %u ms)"
+          args: ["(unsigned) lateness_ms"]
       - script.stop: album_art_timeout_fallback
       - lambda: |-
           id(sendspin_album_art_valid) = true;
       - lvgl.image.update:
           id: album_art_widget
-          src: sendspin_album_art
+          src: album_art
+    on_image_clear:
+      - logger.log: "Album art cleared"
     on_image_error:
-      - script.stop: album_art_timeout_fallback
+      - logger.log: "Album art error"
       - lambda: |-
           id(sendspin_album_art_valid) = false;
       - lvgl.image.update:
@@ -252,6 +258,9 @@ text_sensor:
     id: sendspin_title
     type: title
     on_value:
+      - lambda: |-
+          id(sendspin_album_art_valid) = false;
+      - script.execute: album_art_timeout_fallback
       - lvgl.label.update:
           id: now_playing_title_label
           text: !lambda |-
@@ -272,12 +281,6 @@ text_sensor:
     id: sendspin_album
     type: album
     on_value:
-      - lambda: |-
-          id(sendspin_album_art_valid) = false;
-      - lvgl.image.update:
-          id: album_art_widget
-          src: fallback_playing_image
-      - script.execute: album_art_timeout_fallback
       - lvgl.label.update:
           id: now_playing_album_label
           text: !lambda |-
@@ -635,7 +638,7 @@ script:
   - id: album_art_timeout_fallback
     mode: restart
     then:
-      - delay: 800ms
+      - delay: 1700ms
       - if:
           condition:
             lambda: 'return !id(sendspin_album_art_valid);'
