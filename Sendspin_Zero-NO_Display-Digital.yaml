@@ -54,7 +54,6 @@ improv_serial:
 psram:
   mode: quad
   speed: 80MHz
-  ignore_not_found: false
 
 captive_portal:
 
