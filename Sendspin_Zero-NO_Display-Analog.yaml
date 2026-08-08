@@ -200,6 +200,13 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
 
+button:
+  - platform: restart
+    id: restart_button
+    name: "Restart"
+    entity_category: config
+    icon: "mdi:restart"
+
 globals:
   - id: boot_sound_played
     type: bool
