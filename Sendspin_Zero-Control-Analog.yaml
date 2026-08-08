@@ -44,15 +44,14 @@ packages:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2026.7.3
+  min_version: 2026.7.4
   name_add_mac_suffix: true
   project:
     name: realdeco.sendspin_zero
-    version: "2026.7.3"
+    version: "2026.7.4"
   on_boot:
     priority: -100
     then:
-      - script.execute: led_red
       - lvgl.page.show: idle_page
 
 esp32:
@@ -99,6 +98,11 @@ globals:
     type: bool
     restore_value: no
     initial_value: "false"
+
+  - id: last_album_art_valid
+    type: bool
+    restore_value: false
+    initial_value: 'false'
 
   - id: boot_sound_played
     type: bool
@@ -183,7 +187,7 @@ globals:
 
 image:
   - platform: file
-    file: https://raw.githubusercontent.com/RealDeco/xiaozhi-esphome/main/images/Gwen/240x240/playing.png
+    file: https://raw.githubusercontent.com/RealDeco/xiaozhi-esphome/main/images/Gwen_Black/240x240/playing.png
     id: fallback_playing_image
     resize: 216x216
     type: RGB565
@@ -197,25 +201,37 @@ image:
     display_offset: 1s
     current_image:
       id: album_art
+    transition_image:
+      id: album_art_transition
     on_image_display:
-      - logger.log:
-          format: "Album art displayed (late by %u ms)"
-          args: ["(unsigned) lateness_ms"]
       - script.stop: album_art_timeout_fallback
       - lambda: |-
           id(sendspin_album_art_valid) = true;
+      - if:
+          condition:
+            lambda: 'return id(last_album_art_valid);'
+          then:
+            - lvgl.image.update:
+                id: outgoing_art
+                src: album_art_transition
+          else:
+            - lvgl.image.update:
+                id: outgoing_art
+                src: fallback_playing_image
       - lvgl.image.update:
-          id: album_art_widget
+          id: incoming_art
           src: album_art
+      - lvgl.animation.start: album_art_crossfade
     on_image_clear:
-      - logger.log: "Album art cleared"
+      - logger.log:
+          format: "Album art cleared"
+          level: WARN
     on_image_error:
-      - logger.log: "Album art error"
+      - logger.log:
+          format: "Album art error"
+          level: WARN
       - lambda: |-
           id(sendspin_album_art_valid) = false;
-      - lvgl.image.update:
-          id: album_art_widget
-          src: fallback_playing_image
 
 sendspin:
   id: sendspin_hub
@@ -313,20 +329,10 @@ media_player:
                     lambda: 'return (!lv_obj_has_flag(id(popup_idle), LV_OBJ_FLAG_HIDDEN)) || (!lv_obj_has_flag(id(popup_sendspin), LV_OBJ_FLAG_HIDDEN));'
                   then:
                     - script.execute: render_popup
-        - script.execute: led_green
-
-    on_announcement:
-      then:
-        - script.execute: led_green
 
     on_idle:
       then:
         - script.execute: mp_idle_debounce
-        - script.execute: led_red
-
-    on_pause:
-      then:
-        - script.execute: led_red
 
 sensor:
   - platform: rotary_encoder
@@ -404,11 +410,9 @@ text_sensor:
 
   - platform: sendspin
     id: sendspin_title
+    name: "Song Title"
     type: title
     on_value:
-      - lambda: |-
-          id(sendspin_album_art_valid) = false;
-      - script.execute: album_art_timeout_fallback
       - lvgl.label.update:
           id: now_playing_title_label
           text: !lambda |-
@@ -417,6 +421,7 @@ text_sensor:
 
   - platform: sendspin
     id: sendspin_artist
+    name: "Song Artist"
     type: artist
     on_value:
       - lvgl.label.update:
@@ -427,8 +432,14 @@ text_sensor:
 
   - platform: sendspin
     id: sendspin_album
+    name: "Album Name"
     type: album
     on_value:
+      - lambda:
+          id(last_album_art_valid) = id(sendspin_album_art_valid);
+      - lambda: |-
+          id(sendspin_album_art_valid) = false;
+      - script.execute: album_art_timeout_fallback
       - lvgl.label.update:
           id: now_playing_album_label
           text: !lambda |-
@@ -974,14 +985,15 @@ script:
   - id: album_art_timeout_fallback
     mode: restart
     then:
-      - delay: 1700ms
+      - delay: 2000ms
       - if:
           condition:
             lambda: 'return !id(sendspin_album_art_valid);'
           then:
             - lvgl.image.update:
-                id: album_art_widget
+                id: incoming_art
                 src: fallback_playing_image
+            - lvgl.animation.start: album_art_crossfade
 
   - id: mp_idle_debounce
     mode: restart
@@ -1004,7 +1016,6 @@ script:
                         lambda: 'return (!lv_obj_has_flag(id(popup_idle), LV_OBJ_FLAG_HIDDEN)) || (!lv_obj_has_flag(id(popup_sendspin), LV_OBJ_FLAG_HIDDEN));'
                       then:
                         - script.execute: render_popup
-            - script.execute: led_red
 
   - id: popup_autoclose
     mode: restart
@@ -1523,7 +1534,6 @@ script:
                                                     then:
                                                       - media_player.stop: sendspin_group_media_player
                                                       - lvgl.page.show: idle_page
-                                                      - script.execute: led_red
                                                     else:
                                                       - media_player.play: sendspin_group_media_player
                                           - lambda: |-
@@ -1682,24 +1692,6 @@ script:
               .set_announcement(true)
               .perform();
           }
-
-  - id: led_red
-    then:
-      - light.turn_on:
-          id: led
-          red: 100%
-          green: 0%
-          blue: 0%
-          brightness: 100%
-
-  - id: led_green
-    then:
-      - light.turn_on:
-          id: led
-          red: 0%
-          green: 100%
-          blue: 0%
-          brightness: 100%
 
 interval:
   - interval: 10min
@@ -2113,6 +2105,13 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
 
+button:
+  - platform: restart
+    id: restart_button
+    name: "Restart"
+    entity_category: config
+    icon: "mdi:restart"
+    
 output:
   - platform: ledc
     pin: GPIO11
@@ -2128,16 +2127,6 @@ light:
     output: backlight_output
     restore_mode: RESTORE_DEFAULT_ON
     default_transition_length: 250ms
-
-  - platform: esp32_rmt_led_strip
-    id: led
-    name: LED light
-    entity_category: config
-    pin: GPIO21
-    chipset: WS2812
-    num_leds: 1
-    rgb_order: grb
-    default_transition_length: 0s
 
 spi:
   - id: spi_bus
@@ -2173,6 +2162,17 @@ lvgl:
   color_depth: 16
   bg_color: 0x000000
   default_font: font_display
+
+  animations:
+    - id: album_art_crossfade
+      duration: 1500ms
+      widgets:
+        - id: outgoing_art
+          opa:
+            from: 100%
+            to: 0%
+      on_stop:
+        - sendspin.image.transition_finished: album_slot
 
   pages:
     - id: boot_sound_page
@@ -2685,7 +2685,18 @@ lvgl:
       scrollable: false
       widgets:
         - image:
-            id: album_art_widget
+            id: incoming_art
+            align: TOP_MID
+            x: 0
+            y: 0
+            src: fallback_playing_image
+            width: 216
+            height: 216
+            antialias: false
+            clickable: false
+
+        - image:
+            id: outgoing_art
             align: TOP_MID
             x: 0
             y: 0
