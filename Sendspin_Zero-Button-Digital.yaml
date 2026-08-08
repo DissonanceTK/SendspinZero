@@ -197,6 +197,34 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
 
+button:
+  - platform: restart
+    id: restart_button
+    name: "Restart"
+    entity_category: config
+    icon: "mdi:restart"
+
+text_sensor:
+  - platform: sendspin
+    id: sendspin_title
+    name: "Song Title"
+    type: title
+
+  - platform: sendspin
+    id: sendspin_artist
+    name: "Song Artist"
+    type: artist
+
+  - platform: sendspin
+    id: sendspin_album
+    name: "Album Name"
+    type: album
+
+  - platform: template
+    id: button_action
+    name: Button Action
+    update_interval: never
+
 select:
   - platform: template
     id: button_mode
@@ -211,12 +239,6 @@ select:
       - lambda: |-
           id(button_mode).publish_state(x);
       - script.execute: update_status_leds
-
-text_sensor:
-  - platform: template
-    id: button_action
-    name: Button Action
-    update_interval: never
 
 globals:
   - id: boot_sound_played
