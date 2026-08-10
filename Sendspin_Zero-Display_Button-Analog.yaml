@@ -313,13 +313,11 @@ text_sensor:
     update_interval: 1s
     lambda: |-
       auto t = id(homeassistant_time).now();
-      if (!t.is_valid()) return std::string("--:--:--");
+      if (!t.is_valid()) return std::string("--:--");
       int hour12 = t.hour % 12;
       if (hour12 == 0) hour12 = 12;
-      bool hide_colons = ((t.second % 2) == 0);
-      char buf[9];
-      if (hide_colons) snprintf(buf, sizeof(buf), "%d %02d %02d", hour12, t.minute, t.second);
-      else snprintf(buf, sizeof(buf), "%d:%02d:%02d", hour12, t.minute, t.second);
+      char buf[6];
+      snprintf(buf, sizeof(buf), "%d:%02d", hour12, t.minute);
       return std::string(buf);
     on_value:
       - if:
@@ -1151,7 +1149,7 @@ lvgl:
             widgets:
               - label:
                   id: clock_label
-                  text: "--:--:--"
+                  text: "--:--"
                   text_color: 0xFFFF00
                   text_font: font_temp_big
 
