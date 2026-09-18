@@ -412,6 +412,14 @@ This is the only device based on esp32-s2 Supermini due to it's battery connecti
 
 (3D file includes both with and without hole for switch)
 
-<img width="294" height="155" src="https://github.com/user-attachments/assets/6398f7b7-6a31-48bf-891a-95dad5d790a5" />
+---
+Something is cooking.. 😏
+
+<img width="1254" height="1254" alt="8d69cbe2-7ec3-4f21-87bc-f9efde5867f1" src="https://github.com/user-attachments/assets/2f3a3647-0e5f-46c0-98bf-bb9e9f90b85c" />
+
+
+---
+
+EOL
 
 ---
