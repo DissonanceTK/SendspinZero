@@ -442,6 +442,8 @@ Something is cooking.. 😏
 | GND		| - (GND)	|
 | Left		| LIN		|
 
+To be continued.. ;)
+
 ---
 
 EOL
