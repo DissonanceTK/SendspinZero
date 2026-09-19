@@ -419,6 +419,28 @@ Something is cooking.. 😏
 
 <img width="1254" height="1254" alt="8d69cbe2-7ec3-4f21-87bc-f9efde5867f1" src="https://github.com/user-attachments/assets/2f3a3647-0e5f-46c0-98bf-bb9e9f90b85c" />
 
+3D files are in [`3D_Files`](3D_Files)
+
+## Pin Mapping
+
+### ESP32-S3 → PCM1808
+
+| ESP32S3 Zero  | PCM1808 pin	|
+| ------------- | --------------|
+| 5V		| 5V		|
+| GND		| GND		|
+| 3.3V		| 3.3V		|
+| GPIO 3	| BCK		|
+| GPIO 4	| OUT		|
+| GPIO 5	| LRC		|
+| GPIO 6	| SCK		|
+
+
+| 3.5mm jack	| PCM1808 pin	|
+| ------------- | --------------|
+| Right		| RIN		|
+| GND		| - (GND)	|
+| Left		| LIN		|
 
 ---
 
