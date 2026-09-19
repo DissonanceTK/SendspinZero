@@ -1,6 +1,8 @@
 
 # Minimalistic Sendspin Media Player for Home Assistant
 
+NOTE: This is a DIY project, those that prefer Off-the-shelf you can buy and use right away as sendspin devices there is a project for that here: https://github.com/RealDeco/sendspin-guition
+
 <img width="1500" height="603" alt="Screenshot" src="https://github.com/user-attachments/assets/cf58463a-1112-4aff-8982-a297d2f72e1a" />
 
 A tiny [Sendspin](https://www.sendspin-audio.com) media player with **cover art display** and a **weather clock**, built around the **ESP32-S3 Zero**.
