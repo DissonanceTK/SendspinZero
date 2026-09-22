@@ -430,7 +430,10 @@ When the Sendspin Source role is supported in ESPHome, it will allow external au
 
 Important to remove two capasitors from the PCM1808 or the sound would not be clear:
 
-<img width="300" src="https://github.com/user-attachments/assets/bf51d7e1-3add-41ee-a0d9-c3555721a417" />
+[Open video](https://github.com/user-attachments/assets/831a7ad7-ee62-4282-af22-7b3cd60827db)
+
+
+
 
 
 3D files are in [`3D_Files`](3D_Files)
