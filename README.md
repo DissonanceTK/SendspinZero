@@ -415,9 +415,23 @@ This is the only device based on esp32-s2 Supermini due to it's battery connecti
 (3D file includes both with and without hole for switch)
 
 ---
-Something is cooking.. 😏
 
-<img width="1254" height="1254" alt="8d69cbe2-7ec3-4f21-87bc-f9efde5867f1" src="https://github.com/user-attachments/assets/2f3a3647-0e5f-46c0-98bf-bb9e9f90b85c" />
+## SendspinZero-Source
+
+This device differs from the others by being an input device instead of an output device.
+
+When the Sendspin Source role is supported in ESPHome, it will allow external audio devices such as turntables, radios, cassette decks, CD players, and other devices with audio output to be connected to Music Assistant and played in sync across your Sendspin devices.
+
+<img width="300" src="https://github.com/user-attachments/assets/2f3a3647-0e5f-46c0-98bf-bb9e9f90b85c" />
+
+<img width="300" src="https://github.com/user-attachments/assets/d0d03243-bbb5-40b1-9507-065afbf4530a" />
+
+<img width="300" src="https://github.com/user-attachments/assets/852267ae-91e7-4e0e-8733-2bef4d0a82a2" />
+
+Important to remove two capasitors from the PCM1808 or the sound would not be clear:
+
+<img width="300" src="https://github.com/user-attachments/assets/bf51d7e1-3add-41ee-a0d9-c3555721a417" />
+
 
 3D files are in [`3D_Files`](3D_Files)
 
@@ -442,7 +456,21 @@ Something is cooking.. 😏
 | GND		| - (GND)	|
 | Left		| LIN		|
 
-To be continued.. ;)
+## Parts List
+
+* **1 × ESP32-S3 Zero**
+  [https://www.aliexpress.com/item/1005009890203011.html](https://www.aliexpress.com/item/1005009890203011.html)
+
+  (be sure you select esp32-s3, not esp32-c3 which the page defaults to.)
+
+* **1 × PCM1808 ADC**
+  [https://www.aliexpress.com/item/1005008885079639.html](https://www.aliexpress.com/item/1005008885079639.html)
+
+
+* **1 × 3.5mm female Jack**
+  [https://www.aliexpress.com/item/1005008243857446.html](https://www.aliexpress.com/item/1005008243857446.html)
+
+* 10 short cords.
 
 ---
 
