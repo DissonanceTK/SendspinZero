@@ -8,28 +8,13 @@ substitutions:
   startup_sound_file: Home_Connected # Home_Connected, popup, available, Server_Connected
 
   # Image model options are: AlbertQuackmore, Alita, Casita, Gwen, HA-character, ha-girl, Hacker, Salem, Sarah, Shaun
-  imagemodel: "ha-girl"
+  imagemodel: "HA-character"
 
-  media_sample_rate: 48000
+  media_sample_rate: 44100
 
 packages:
-  audio:
-    url: https://github.com/RealDeco/SendspinZero.git
-    ref: main
-    refresh: 0s
-    files:
-      - configs/analog_audio_config.yaml
-  hw:
-    url: https://github.com/RealDeco/SendspinZero.git
-    ref: main
-    refresh: 0s
-    files:
-      - configs/analog_speaker_config.yaml
-
-### END OF DAC SETTINGS
-
   extcomp:
-    url: https://github.com/DissonanceTK/xiaozhi-esphome.git
+    url: https://github.com/RealDeco/xiaozhi-esphome.git
     ref: main
     refresh: 0s
     files:
@@ -43,7 +28,7 @@ esphome:
   name_add_mac_suffix: true
   project:
     name: realdeco.sendspin_zero
-    version: "2026.7.4"
+    version: "2026.9.0"
   on_boot:
     priority: -100
     then:
@@ -187,16 +172,17 @@ sendspin:
 
 i2s_audio:
   - id: i2s_audio_bus
-    i2s_lrclk_pin: GPIO4
-    i2s_bclk_pin: GPIO5
 
 speaker:
   - platform: i2s_audio
     id: box_speaker
+    sample_rate: ${media_sample_rate}
+    i2s_dout_pin: GPIO4
+    spdif_mode: true
     i2s_audio_id: i2s_audio_bus
-    i2s_dout_pin: GPIO6
     dac_type: external
     channel: stereo
+    use_apll: true
 
   - platform: mixer
     id: mixing_speaker
@@ -420,11 +406,11 @@ text_sensor:
     update_interval: 1s
     lambda: |-
       auto t = id(homeassistant_time).now();
-      if (!t.is_valid()) return std::string("--:--");
-      int hour12 = t.hour % 12;
-      if (hour12 == 0) hour12 = 12;
-      char buf[6];
-      snprintf(buf, sizeof(buf), "%d:%02d", hour12, t.minute);
+      if (!t.is_valid()) return std::string("--:--:--");
+      bool hide_colons = ((t.second % 2) == 0);
+      char buf[9];
+      if (hide_colons) snprintf(buf, sizeof(buf), "%02d %02d %02d", t.hour, t.minute, t.second);
+      else snprintf(buf, sizeof(buf), "%02d:%02d:%02d", t.hour, t.minute, t.second);
       return std::string(buf);
     on_value:
       - if:
@@ -433,22 +419,6 @@ text_sensor:
           then:
             - lvgl.label.update:
                 id: clock_label
-                text: !lambda return x;
-
-  - platform: template
-    id: clock_ampm
-    update_interval: 1s
-    lambda: |-
-      auto t = id(homeassistant_time).now();
-      if (!t.is_valid()) return std::string("--");
-      return std::string(t.hour < 12 ? "AM" : "PM");
-    on_value:
-      - if:
-          condition:
-            lvgl.page.is_showing: idle_page
-          then:
-            - lvgl.label.update:
-                id: clock_ampm_label
                 text: !lambda return x;
 
   - platform: template
@@ -465,7 +435,7 @@ text_sensor:
 
       const char* mon = (t.month >= 1 && t.month <= 12) ? months[t.month - 1] : "???";
       char buf[32];
-      snprintf(buf, sizeof(buf), "%s %d, %d", mon, t.day_of_month, t.year);
+      snprintf(buf, sizeof(buf), "%d %s", t.day_of_month, mon);
       return std::string(buf);
     on_value:
       - if:
@@ -520,7 +490,7 @@ font:
       weight: 700
     id: font_temp_big
     size: 34
-    glyphs: "0123456789:- "
+    glyphs: "0123456789-"
 
   - file:
       type: gfonts
@@ -528,7 +498,7 @@ font:
       weight: 700
     id: font_temp_unit
     size: 16
-    glyphs: "\u00B0CF-AMP"
+    glyphs: "\u00B0CF-"
 
   - file:
       type: gfonts
@@ -541,7 +511,7 @@ font:
   - file: https://raw.githubusercontent.com/rbtdev/spiroplot/master/fonts/DSEG7/Classic-MINI/DSEG7ClassicMini-Bold.ttf
     id: font_7seg
     size: 30
-    glyphs: "0123456789:- AMP"
+    glyphs: "0123456789:- "
 
   - file: https://github.com/Templarian/MaterialDesign-Webfont/raw/refs/heads/master/fonts/materialdesignicons-webfont.ttf
     id: font_mdi_weather
@@ -1149,15 +1119,11 @@ output:
 
   - platform: ledc
     id: red_led
-    pin:
-      number: GPIO3
-      inverted: true
+    pin: GPIO3
 
   - platform: ledc
     id: green_led
-    pin:
-      number: GPIO2
-      inverted: true
+    pin: GPIO2
 
 light:
   - platform: monochromatic
@@ -1246,34 +1212,16 @@ lvgl:
       bg_color: 0x000000
       scrollable: false
       widgets:
-        - obj:
+        - label:
+            id: clock_label
             align: TOP_MID
-            y: 2
+            y: 8
             width: 320
-            height: 38
-            bg_opa: TRANSP
-            border_opa: TRANSP
-            pad_all: 0
-            scrollable: false
-            layout:
-              type: flex
-              flex_flow: row
-              flex_align_main: CENTER
-              flex_align_cross: CENTER
-              flex_align_track: CENTER
-            widgets:
-              - label:
-                  id: clock_label
-                  text: "--:--"
-                  text_color: 0xFFFF00
-                  text_font: font_temp_big
-
-              - label:
-                  id: clock_ampm_label
-                  text: "--"
-                  text_color: 0xFFFF00
-                  text_font: font_temp_unit
-                  pad_left: 4
+            text: "--:--:--"
+            text_color: 0xFFFF00
+            text_font: font_7seg
+            text_letter_space: 0
+            text_align: CENTER
 
         - label:
             id: date_label

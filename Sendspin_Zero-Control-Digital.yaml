@@ -34,21 +34,21 @@ packages:
     ref: main
     refresh: 0s
     files:
-      - devices/Under_Development/Modular/HW/sendspin-external_components_2026.7.3.yaml
+      - devices/Under_Development/Modular/HW/sendspin-external_components_2026.8.0.yaml
 
 #packages: # local
-#  extcomp: !include localtest/HW/sendspin-external_components_2026.7.3.yaml
+#  extcomp: !include localtest/HW/sendspin-external_components_2026.8.0.yaml
         
 ## END OF SETTINGS ###############################################################################################################################
 
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2026.7.4
+  min_version: 2026.9.0
   name_add_mac_suffix: true
   project:
     name: realdeco.sendspin_zero
-    version: "2026.7.4"
+    version: "2026.9.0"
   on_boot:
     priority: -100
     then:
@@ -204,7 +204,6 @@ image:
     transition_image:
       id: album_art_transition
     on_image_display:
-      - script.stop: album_art_timeout_fallback
       - lambda: |-
           id(sendspin_album_art_valid) = true;
       - if:
@@ -226,6 +225,12 @@ image:
       - logger.log:
           format: "Album art cleared"
           level: WARN
+      - lambda: |-
+          id(sendspin_album_art_valid) = false;
+      - lvgl.image.update:
+          id: incoming_art
+          src: fallback_playing_image
+      - lvgl.animation.start: album_art_crossfade
     on_image_error:
       - logger.log:
           format: "Album art error"
@@ -289,6 +294,21 @@ media_player:
     id: sendspin_group_media_player
     name: Sendspin Group Media Player
 
+    on_idle:
+      then:
+        - lvgl.page.show: idle_page
+        - if:
+            condition:
+              lambda: 'return id(control_menu_active);'
+            then:
+              - script.execute: render_control_menu
+            else:
+              - if:
+                  condition:
+                    lambda: 'return (!lv_obj_has_flag(id(popup_idle), LV_OBJ_FLAG_HIDDEN)) || (!lv_obj_has_flag(id(popup_sendspin), LV_OBJ_FLAG_HIDDEN));'
+                  then:
+                    - script.execute: render_popup
+
   - platform: speaker_source
     id: external_media_player
     name: Media Player
@@ -316,7 +336,6 @@ media_player:
 
     on_play:
       then:
-        - script.stop: mp_idle_debounce
         - script.execute: hide_media_menu
         - lvgl.page.show: sendspin_page
         - if:
@@ -333,7 +352,22 @@ media_player:
 
     on_idle:
       then:
-        - script.execute: mp_idle_debounce
+        - if:
+            condition:
+              media_player.is_idle: sendspin_group_media_player
+            then:
+              - lvgl.page.show: idle_page
+              - if:
+                  condition:
+                    lambda: 'return id(control_menu_active);'
+                  then:
+                    - script.execute: render_control_menu
+                  else:
+                    - if:
+                        condition:
+                          lambda: 'return (!lv_obj_has_flag(id(popup_idle), LV_OBJ_FLAG_HIDDEN)) || (!lv_obj_has_flag(id(popup_sendspin), LV_OBJ_FLAG_HIDDEN));'
+                        then:
+                          - script.execute: render_popup
 
 sensor:
   - platform: rotary_encoder
@@ -440,7 +474,6 @@ text_sensor:
           id(last_album_art_valid) = id(sendspin_album_art_valid);
       - lambda: |-
           id(sendspin_album_art_valid) = false;
-      - script.execute: album_art_timeout_fallback
       - lvgl.label.update:
           id: now_playing_album_label
           text: !lambda |-
@@ -703,7 +736,7 @@ script:
                   entity_id: "{{ weather_entity }}"
                   type: daily
                 variables:
-                  weather_entity: |-
+                  weather_entity: !lambda |-
                     return id(ha_weather_entity).state;
                 capture_response: true
                 on_success:
@@ -982,41 +1015,6 @@ script:
                             volume_target->make_call().set_volume(id(volume_control_pct) * 0.009f).perform();
                         - script.execute: show_volume_popup
                         - script.execute: popup_autoclose
-
-  - id: album_art_timeout_fallback
-    mode: restart
-    then:
-      - delay: 2000ms
-      - if:
-          condition:
-            lambda: 'return !id(sendspin_album_art_valid);'
-          then:
-            - lvgl.image.update:
-                id: incoming_art
-                src: fallback_playing_image
-            - lvgl.animation.start: album_art_crossfade
-
-  - id: mp_idle_debounce
-    mode: restart
-    then:
-      - delay: 1200ms
-      - if:
-          condition:
-            and:
-              - media_player.is_idle: external_media_player
-          then:
-            - lvgl.page.show: idle_page
-            - if:
-                condition:
-                  lambda: 'return id(control_menu_active);'
-                then:
-                  - script.execute: render_control_menu
-                else:
-                  - if:
-                      condition:
-                        lambda: 'return (!lv_obj_has_flag(id(popup_idle), LV_OBJ_FLAG_HIDDEN)) || (!lv_obj_has_flag(id(popup_sendspin), LV_OBJ_FLAG_HIDDEN));'
-                      then:
-                        - script.execute: render_popup
 
   - id: popup_autoclose
     mode: restart
@@ -1579,9 +1577,9 @@ script:
                         media_content_type: music
                         media_content_id: "{{ media_url }}"
                       variables:
-                        target_entity: |-
+                        target_entity: !lambda |-
                           return id(ha_media_player_entity).state;
-                        media_url: |-
+                        media_url: !lambda |-
                           const char *urls[10] = {
                             id(media_url_1).state.c_str(), id(media_url_2).state.c_str(), id(media_url_3).state.c_str(),
                             id(media_url_4).state.c_str(), id(media_url_5).state.c_str(), id(media_url_6).state.c_str(),
@@ -1624,7 +1622,7 @@ script:
                       data_template:
                         entity_id: "{{ target_entity }}"
                       variables:
-                        target_entity: |-
+                        target_entity: !lambda |-
                           const char *entities[6] = {
                             id(control_device_1).state.c_str(),
                             id(control_device_2).state.c_str(),
@@ -1643,7 +1641,7 @@ script:
                         entity_id: "{{ target_entity }}"
                         brightness: "{{ brightness_value }}"
                       variables:
-                        target_entity: |-
+                        target_entity: !lambda |-
                           const char *entities[6] = {
                             id(control_device_1).state.c_str(),
                             id(control_device_2).state.c_str(),
@@ -1655,7 +1653,7 @@ script:
                           int index = id(selected_control_index);
                           if (index < 1 || index > 6) index = 1;
                           return std::string(entities[index - 1]);
-                        brightness_value: |-
+                        brightness_value: !lambda |-
                           int bri = (int) lroundf(id(knob_control_pct) * 255.0f / 100.0f);
                           if (bri < 1) bri = 1;
                           if (bri > 255) bri = 255;
