@@ -13,21 +13,6 @@ substitutions:
   media_sample_rate: 48000
 
 packages:
-  audio:
-    url: https://github.com/RealDeco/SendspinZero.git
-    ref: main
-    refresh: 0s
-    files:
-      - configs/analog_audio_config.yaml
-  hw:
-    url: https://github.com/RealDeco/SendspinZero.git
-    ref: main
-    refresh: 0s
-    files:
-      - configs/analog_speaker_config.yaml
-
-### END OF DAC SETTINGS
-
   extcomp:
     url: https://github.com/DissonanceTK/xiaozhi-esphome.git
     ref: main
@@ -43,7 +28,7 @@ esphome:
   name_add_mac_suffix: true
   project:
     name: realdeco.sendspin_zero
-    version: "2026.7.4"
+    version: "2026.9.0"
   on_boot:
     priority: -100
     then:
